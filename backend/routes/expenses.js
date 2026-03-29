@@ -10,6 +10,21 @@ const prisma = new PrismaClient();
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const { amount, currency, category, description, expense_date } = req.body;
+
+        // Input Validation
+        if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            return res.status(400).json({ error: 'Amount must be a number greater than 0' });
+        }
+        if (!currency || !/^[A-Za-z]{3}$/.test(currency)) {
+            return res.status(400).json({ error: 'Invalid currency format (e.g., USD, INR)' });
+        }
+        if (!description || description.trim().length === 0 || !isNaN(Number(description.trim()))) {
+            return res.status(400).json({ error: 'Description must contain valid text, not just numbers' });
+        }
+        if (expense_date && isNaN(Date.parse(expense_date))) {
+            return res.status(400).json({ error: 'Invalid date format' });
+        }
+
         const userId = req.user.id;
         const companyId = req.user.companyId;
 

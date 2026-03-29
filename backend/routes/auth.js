@@ -8,6 +8,15 @@ const prisma = new PrismaClient();
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     
+    // Input Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+    if (!password || password.trim().length === 0) {
+        return res.status(400).json({ error: 'Password cannot be empty' });
+    }
+
     try {
         // Wait for actual DB to be available.
         // Assuming user passwords are plain text for simplicity in this mock, normally we'd compare bcrypt hashes.
