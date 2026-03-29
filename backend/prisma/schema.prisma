@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id            String             @id @default(uuid())
+  name          String
+  country       String
+  currency_code String
+  created_at    DateTime           @default(now())
+  users         User[]
+  workflows     ApprovalWorkflow[]
+  rules         ApprovalRule[]
+  expenses      Expense[]          @relation("CompanyExpenses")
+}
+
+model User {
+  id                String            @id @default(uuid())
+  company_id        String
+  company           Company           @relation(fields: [company_id], references: [id])
+  name              String
+  email             String            @unique
+  password          String
+  role              Role              @default(EMPLOYEE)
+  manager_id        String?
+  manager           User?             @relation("ManagerToEmployee", fields: [manager_id], references: [id])
+  team_members      User[]            @relation("ManagerToEmployee")
+  expenses          Expense[]
+  expense_approvals ExpenseApproval[]
+  created_at        DateTime          @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model Expense {
+  id          String            @id @default(uuid())
+  user_id     String
+  user        User              @relation(fields: [user_id], references: [id])
+  company_id  String
+  company     Company           @relation("CompanyExpenses", fields: [company_id], references: [id])
+  amount      Float
+  currency    String
+  category    String
+  description String?
+  expense_date DateTime
+  status      ExpenseStatus     @default(DRAFT)
+  created_at  DateTime          @default(now())
+  items       ExpenseItem[]
+  approvals   ExpenseApproval[]
+}
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ExpenseItem {
+  id         String  @id @default(uuid())
+  expense_id String
+  expense    Expense @relation(fields: [expense_id], references: [id])
+  item_name  String
+  amount     Float
+}
+
+model ApprovalWorkflow {
+  id                  String  @id @default(uuid())
+  company_id          String
+  company             Company @relation(fields: [company_id], references: [id])
+  step_order          Int
+  role                Role
+  is_mandatory        Boolean @default(true)
+  is_manager_approver Boolean @default(false)
+}
+
+model ExpenseApproval {
+  id          String         @id @default(uuid())
+  expense_id  String
+  expense     Expense        @relation(fields: [expense_id], references: [id])
+  approver_id String
+  approver    User           @relation(fields: [approver_id], references: [id])
+  step_order  Int
+  status      ApprovalStatus @default(PENDING)
+  comment     String?
+  action_date DateTime?
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ApprovalRule {
+  id                   String   @id @default(uuid())
+  company_id           String
+  company              Company  @relation(fields: [company_id], references: [id])
+  rule_type            RuleType
+  percentage           Float?
+  specific_approver_id String?
+  hybrid_logic         String? // "AND" or "OR"
+  created_at           DateTime @default(now())
+}
+
+enum RuleType {
+  PERCENTAGE
+  SPECIFIC
+  HYBRID
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  user_id   String
+  action    String
+  timestamp DateTime @default(now())
+}
