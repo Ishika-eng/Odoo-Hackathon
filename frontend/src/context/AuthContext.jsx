@@ -31,8 +31,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // Calling dummy endpoint for now
-      const res = await api.post('/auth/login/mock', { email, password });
+      const res = await api.post('/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       setUser(res.data.user);

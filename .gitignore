@@ -26,3 +26,4 @@ backend.log
 # IDE
 .vscode/
 .idea/
+*.zip

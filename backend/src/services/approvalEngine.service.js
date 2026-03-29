@@ -13,7 +13,7 @@ class ApprovalEngineService {
    */
   async initiateApprovalFlow(expenseId) {
     const expense = await prisma.expense.findUnique({
-      where: { id: expenseId },
+      where: { id: parseInt(expenseId) },
       include: { user: true }
     });
 
@@ -58,7 +58,7 @@ class ApprovalEngineService {
     // Create the first approval step
     await prisma.expenseApproval.create({
       data: {
-        expense_id: expenseId,
+        expense_id: parseInt(expenseId),
         approver_id: firstApproverId,
         step_order: initialStepOrder,
         status: 'PENDING'
@@ -66,7 +66,7 @@ class ApprovalEngineService {
     });
 
     await prisma.expense.update({
-      where: { id: expenseId },
+      where: { id: parseInt(expenseId) },
       data: { status: 'PENDING' }
     });
 
@@ -89,8 +89,8 @@ class ApprovalEngineService {
     // 1. Find the pending approval record for this expense + approver
     const pendingApproval = await prisma.expenseApproval.findFirst({
       where: {
-        expense_id: expenseId,
-        approver_id: approverId,
+        expense_id: parseInt(expenseId),
+        approver_id: parseInt(approverId),
         status: 'PENDING'
       }
     });
@@ -113,13 +113,13 @@ class ApprovalEngineService {
 
     // Fetch expense to get company_id
     const expense = await prisma.expense.findUnique({
-      where: { id: expenseId }
+      where: { id: parseInt(expenseId) }
     });
 
     // 3. Short-circuit if REJECTED
     if (action === 'REJECTED') {
       await prisma.expense.update({
-        where: { id: expenseId },
+        where: { id: parseInt(expenseId) },
         data: { status: 'REJECTED' }
       });
       await this.logAudit(approverId, `Expense ${expenseId} marked REJECTED due to approver rejection`);
@@ -133,7 +133,7 @@ class ApprovalEngineService {
       if (evaluation.shouldApprove) {
         // Engine returned early approval!
         await prisma.expense.update({
-          where: { id: expenseId },
+          where: { id: parseInt(expenseId) },
           data: { status: 'APPROVED' }
         });
         await this.logAudit(approverId, `Expense ${expenseId} auto-approved by Rule Engine: ${evaluation.reason}`);
@@ -163,7 +163,7 @@ class ApprovalEngineService {
     if (!nextWorkflowStep) {
       // Reached the end of the workflows! Final approval.
       await prisma.expense.update({
-        where: { id: expenseId },
+        where: { id: parseInt(expenseId) },
         data: { status: 'APPROVED' }
       });
       return { status: 'APPROVED', message: "Expense fully approved sequentially" };
@@ -182,7 +182,7 @@ class ApprovalEngineService {
 
     await prisma.expenseApproval.create({
       data: {
-        expense_id: expenseId,
+        expense_id: parseInt(expenseId),
         approver_id: nextApprovers[0].id,
         step_order: nextWorkflowStep.step_order,
         status: 'PENDING'
@@ -200,7 +200,7 @@ class ApprovalEngineService {
     if (!['APPROVED', 'REJECTED'].includes(action)) throw new Error("Invalid action");
 
     await prisma.expense.update({
-      where: { id: expenseId },
+      where: { id: parseInt(expenseId) },
       data: { status: action }
     });
 
@@ -210,8 +210,10 @@ class ApprovalEngineService {
 
   // Audit Logs
   async logAudit(userId, actionMsg) {
+    if (userId !== "SYSTEM") userId = parseInt(userId);
+    
     await prisma.auditLog.create({
-      data: { user_id: userId, action: actionMsg }
+      data: { user_id: isNaN(userId) ? null : userId, action: actionMsg }
     });
   }
 }

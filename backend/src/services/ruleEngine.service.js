@@ -16,7 +16,7 @@ class RuleEngineService {
   async evaluate(expenseId, companyId) {
     // 1. Fetch the company's rule configuration
     const rule = await prisma.approvalRule.findFirst({
-      where: { company_id: companyId }
+      where: { company_id: parseInt(companyId) }
     });
 
     if (!rule) {
@@ -25,14 +25,14 @@ class RuleEngineService {
 
     // 2. Fetch all approval actions for this expense
     const approvals = await prisma.expenseApproval.findMany({
-      where: { expense_id: expenseId }
+      where: { expense_id: parseInt(expenseId) }
     });
 
     const approvedApprovals = approvals.filter(a => a.status === 'APPROVED');
     
     // We also need the total mandatory steps to calculate percentage
     const workflows = await prisma.approvalWorkflow.findMany({
-      where: { company_id: companyId, is_mandatory: true }
+      where: { company_id: parseInt(companyId), is_mandatory: true }
     });
     const totalMandatorySteps = workflows.length || 1; // prevent div/0
     

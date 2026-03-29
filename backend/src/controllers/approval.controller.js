@@ -10,7 +10,7 @@ exports.getPendingApprovals = async (req, res) => {
     const approverId = req.user.id;
     const pending = await prisma.expenseApproval.findMany({
       where: {
-        approver_id: approverId,
+        approver_id: parseInt(approverId),
         status: 'PENDING'
       },
       include: {
@@ -29,7 +29,7 @@ exports.getApprovalTrail = async (req, res) => {
   try {
     const { expenseId } = req.params;
     const trail = await prisma.expenseApproval.findMany({
-      where: { expense_id: expenseId },
+      where: { expense_id: parseInt(expenseId) },
       orderBy: { step_order: 'asc' },
       include: { approver: true }
     });
@@ -76,7 +76,7 @@ exports.adminOverride = async (req, res) => {
 // Admin configuration controllers
 exports.configureWorkflow = async (req, res) => {
   try {
-    const companyId = req.user.company_id;
+    const companyId = parseInt(req.user.company_id);
     const { steps } = req.body; // Array of { role, step_order, is_mandatory, is_manager_approver }
     
     // Replace all workflows (simplest for a hackathon)
@@ -99,7 +99,7 @@ exports.configureWorkflow = async (req, res) => {
 
 exports.getWorkflows = async (req, res) => {
   try {
-    const companyId = req.user.company_id;
+    const companyId = parseInt(req.user.company_id);
     const steps = await prisma.approvalWorkflow.findMany({
       where: { company_id: companyId },
       orderBy: { step_order: 'asc' }
@@ -112,7 +112,7 @@ exports.getWorkflows = async (req, res) => {
 
 exports.configureRule = async (req, res) => {
   try {
-    const companyId = req.user.company_id;
+    const companyId = parseInt(req.user.company_id);
     const { rule_type, percentage, specific_approver_id, hybrid_logic } = req.body;
 
     // Remove existing rule
@@ -136,7 +136,7 @@ exports.configureRule = async (req, res) => {
 
 exports.getRule = async (req, res) => {
   try {
-    const companyId = req.user.company_id;
+    const companyId = parseInt(req.user.company_id);
     const rule = await prisma.approvalRule.findFirst({
       where: { company_id: companyId }
     });
