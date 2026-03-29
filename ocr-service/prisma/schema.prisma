@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model OCRReceipt {
+  id            Int       @id @default(autoincrement())
+  expenseId     Int?
+  extractedText String    @db.Text
+  amount        Float?
+  date          DateTime?
+  vendor        String?
+  category      String?
+  confidence    Float?    // Overall confidence score of the OCR extraction
+  currency      String?   @default("INR") // e.g. INR, USD, EUR
+  createdAt     DateTime  @default(now())
+}
