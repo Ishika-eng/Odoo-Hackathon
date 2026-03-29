@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(255)
+  country          String?            @db.VarChar(100)
+  currency_code    String?            @db.VarChar(10)
+  created_at       DateTime?          @default(now())
+  users            User[]
+  expenses         Expense[]
+  approvalWorkflows ApprovalWorkflow[]
+  approvalRules    ApprovalRule[]
+
+  @@map("companies")
+}
+
+model User {
+  id               Int                @id @default(autoincrement())
+  company_id       Int?
+  name             String?            @db.VarChar(255)
+  email            String             @unique @db.VarChar(255)
+  password         String
+  role             String?            @db.VarChar(50)
+  manager_id       Int?
+  created_at       DateTime?          @default(now())
+  
+  company          Company?           @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  manager          User?              @relation("ManagerToUser", fields: [manager_id], references: [id])
+  employees        User[]             @relation("ManagerToUser")
+  expenses         Expense[]
+  expenseApprovals ExpenseApproval[]
+  approvalRules    ApprovalRule[]
+
+  @@map("users")
+}
+
+model Expense {
+  id               Int                @id @default(autoincrement())
+  user_id          Int?
+  company_id       Int?
+  amount           Decimal?           @db.Decimal(10, 2)
+  currency         String?            @db.VarChar(10)
+  category         String?            @db.VarChar(100)
+  description      String?            @db.Text
+  expense_date     DateTime?          @db.Date
+  status           String?            @default("PENDING") @db.VarChar(50)
+  created_at       DateTime?          @default(now())
+
+  user             User?              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company          Company?           @relation(fields: [company_id], references: [id])
+  expenseItems     ExpenseItem[]
+  expenseApprovals ExpenseApproval[]
+  receipts         Receipt[]
+
+  @@map("expenses")
+}
+
+model ExpenseItem {
+  id               Int                @id @default(autoincrement())
+  expense_id       Int?
+  item_name        String?            @db.VarChar(255)
+  amount           Decimal?           @db.Decimal(10, 2)
+
+  expense          Expense?           @relation(fields: [expense_id], references: [id], onDelete: Cascade)
+
+  @@map("expense_items")
+}
+
+model ApprovalWorkflow {
+  id               Int                @id @default(autoincrement())
+  company_id       Int?
+  step_order       Int?
+  role             String?            @db.VarChar(50)
+  is_mandatory     Boolean?           @default(true)
+
+  company          Company?           @relation(fields: [company_id], references: [id])
+
+  @@map("approval_workflows")
+}
+
+model ExpenseApproval {
+  id               Int                @id @default(autoincrement())
+  expense_id       Int?
+  approver_id      Int?
+  step_order       Int?
+  status           String?            @db.VarChar(50)
+  comment          String?            @db.Text
+  action_date      DateTime?          @db.Timestamp()
+
+  expense          Expense?           @relation(fields: [expense_id], references: [id], onDelete: Cascade)
+  approver         User?              @relation(fields: [approver_id], references: [id])
+
+  @@map("expense_approvals")
+}
+
+model ApprovalRule {
+  id                   Int            @id @default(autoincrement())
+  company_id           Int?
+  rule_type            String?        @db.VarChar(50)
+  percentage           Int?
+  specific_approver_id Int?
+  created_at           DateTime?      @default(now())
+
+  company              Company?       @relation(fields: [company_id], references: [id])
+  specific_approver    User?          @relation(fields: [specific_approver_id], references: [id])
+
+  @@map("approval_rules")
+}
+
+model Currency {
+  code             String             @id @db.VarChar(10)
+  name             String?            @db.VarChar(100)
+  symbol           String?            @db.VarChar(10)
+
+  @@map("currencies")
+}
+
+model Receipt {
+  id               Int                @id @default(autoincrement())
+  expense_id       Int?
+  file_url         String?            @db.Text
+  extracted_data   Json?              
+
+  expense          Expense?           @relation(fields: [expense_id], references: [id])
+
+  @@map("receipts")
+}
+
+model AuditLog {
+  id               Int                @id @default(autoincrement())
+  user_id          Int?
+  action           String?            @db.Text
+  timestamp        DateTime?          @default(now())
+
+  @@map("audit_logs")
+}
