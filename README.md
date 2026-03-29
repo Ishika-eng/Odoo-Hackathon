@@ -1,19 +1,27 @@
-# Reimbursement Management System
+# 💸 Reimbursement Management System
 
-A production-ready, multi-company expense reimbursement platform with multi-level approval workflows.
+## 🚀 Overview
+A production-ready, multi-company expense reimbursement platform designed to streamline expense submission, approval workflows, and reimbursement processes within organizations.
 
-## Architecture
+It eliminates manual processes and introduces:
+- **Automation** ⚙️ (OCR Integration)
+- **Transparency** 👁️ (Audit Logs)
+- **Flexibility** 🔁 (Configurable Workflows)
+
+---
+
+## 🏗️ System Architecture
 
 ```
 ├── database/          PostgreSQL schema with ENUMs, triggers, indexes
-├── backend/           Node.js + Express REST API
+├── backend/           Node.js + Express REST API (using pg driver)
 │   └── src/
 │       ├── config/    Database connection
 │       ├── controllers/  Route handlers
 │       ├── middleware/   JWT auth & role-based authorization
 │       ├── routes/       API route definitions
 │       └── services/     Workflow engine & audit logging
-└── frontend/          React SPA
+└── frontend/          React SPA (Vite + Tailwind CSS)
     └── src/
         ├── components/  Navbar, ProtectedRoute
         ├── context/     AuthContext (JWT management)
@@ -21,7 +29,35 @@ A production-ready, multi-company expense reimbursement platform with multi-leve
         └── services/    Axios API client
 ```
 
-## Setup
+---
+
+## 🎯 Features
+
+### 🔐 Authentication & User Management
+- Role-based access: **Admin, Manager, Employee**
+- Secure login/signup using JWT
+- Admin can create users and assign roles (Strict: 1 Admin per company)
+
+### 💸 Expense Submission & OCR
+- Employees can submit expenses with title, category, description, date
+- **OCR Integration** (Tesseract.js) extracts:
+  - Merchant/Vendor 🏪
+  - Date 📅
+  - Amount & Currency ($ € £ ₹) 💰
+- **Itemized Breakdown**: Auto-populate editable line items from receipt
+
+### 🔁 Approval Workflow
+- Multi-level sequential approval system
+- **Admin Override**: Administrators can forcefully approve or reject any expense
+- Visual indicator for overridden expenses
+
+### 📊 Monitoring & Audit
+- **Audit Logs**: Every action tracked with user, entity, and timestamp
+- **Dashboards**: Statistics for total, pending, approved, and rejected expenses
+
+---
+
+## 🛠️ Setup Instructions
 
 ### 1. Database
 ```bash
@@ -33,7 +69,7 @@ psql -d reimbursement_db -f database/schema.sql
 ```bash
 cd backend
 npm install
-# Edit .env with your DB credentials and JWT_SECRET
+# Configure .env with DB credentials, JWT_SECRET, and PORT (default 5000)
 npm run dev
 ```
 
@@ -41,42 +77,48 @@ npm run dev
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
-## Features
+---
 
-- **Multi-company** — each company gets isolated data, workflows, categories
-- **Role-based access** — ADMIN, MANAGER, EMPLOYEE with route protection
-- **Expense submission** — with categories, amounts, currencies
-- **Multi-step workflow engine** — configurable approval chains
-- **Approval rule engine** — PERCENTAGE, SPECIFIC, HYBRID rule types
-- **Audit logging** — every action tracked with user, entity, timestamp
-- **JWT authentication** — secure token-based auth with bcrypt password hashing
+## 🧩 Tech Stack
 
-## API Endpoints
+- **Frontend**: React.js, Tailwind CSS, Lucide React
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL (pg driver)
+- **OCR**: Tesseract.js
+- **Auth**: JWT (bcryptjs for hashing)
+
+---
+
+## 📌 API Endpoints
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | /api/auth/register | No | Register company + admin |
 | POST | /api/auth/login | No | Login, get JWT |
 | POST | /api/expenses | Yes | Submit expense |
-| GET | /api/expenses/mine | Yes | My expenses |
-| GET | /api/expenses/all | Admin | All company expenses |
-| GET | /api/approvals/pending | Yes | Pending approvals for user |
-| POST | /api/approvals/:id/act | Yes | Approve/Reject |
-| GET | /api/workflows | Yes | List workflows |
-| PUT | /api/workflows/:id | Admin | Update workflow |
-| POST | /api/users | Admin | Create user |
-| GET | /api/users | Yes | List company users |
-| GET | /api/categories | Yes | List categories |
+| POST | /api/ocr/extract | Yes | Extract receipt data |
+| GET | /api/approvals/pending| Yes | Pending approvals for user |
+| POST | /api/approvals/:id | Yes | Approve/Reject |
+| PUT | /api/approvals/:id/override | Admin | Force action (Overide) |
 | GET | /api/audit | Admin | Audit logs |
 
-## Workflow Flow
+---
 
-1. Employee submits expense → auto-assigned to default workflow
-2. Step 1 approvals created (Manager)
-3. Manager approves → rule engine evaluates → advances to Step 2
-4. Step 2 approvals created (Admin/Finance)
-5. Final approval → expense marked APPROVED
-6. Any rejection → immediately marks expense REJECTED
+## 🚀 Future Enhancements
+- Notification system (Email/Slack) 🔔  
+- Mobile application (React Native) 📱  
+- Advanced Analytics Dashboard 📊  
+
+---
+
+## 🎯 Conclusion
+This system provides a scalable solution for managing reimbursements with automated workflows, intelligent OCR processing, and robust administrative control.
+
+
+## 🎯 Conclusion
+
+This system provides a scalable and flexible solution for managing reimbursements with automated workflows, intelligent rule processing, and modern full-stack architecture.
+>>>>>>> d626948ad3df460351c9c44ec28bb96aadd9af4f
